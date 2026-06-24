@@ -1,18 +1,27 @@
 services:
-  stat-server:
-    build: stat/stats-server
-    container_name: stat-server
+  discovery-server:
+    build: infra/discovery-server
+    container_name: discovery-server
     ports:
-      - "9090:9090"
+      - "8761:8761"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  config-server:
+    build: infra/config-server
+    container_name: config-server
+    ports:
+      - "8888:8888"
     depends_on:
-      stat-server-db:
+      discovery-server:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_STAT_SERVER}
+      - EUREKA_URI=http://discovery-server:8761/eureka
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9090/actuator/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
       timeout: 5s
       interval: 5s
       retries: 10
@@ -25,11 +34,51 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=${POSTGRES_DB_STAT_SERVER}
-      - POSTGRES_USER=${POSTGRES_USER_STAT_SERVER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_STAT_SERVER}
+      - POSTGRES_DB=${POSTGRES_DB_STAT_SERVER:-stat_db}
+      - POSTGRES_USER=${POSTGRES_USER_STAT_SERVER:-stat_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_STAT_SERVER:-stat_password}
     healthcheck:
-      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      test: ["CMD-SHELL", "pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  stat-server:
+    build: stat/stats-server
+    container_name: stat-server
+    ports:
+      - "9090:9090"
+    depends_on:
+      stat-server-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER:-jdbc:postgresql://stat-server-db:5432/stat_db}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER:-stat_user}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_STAT_SERVER:-stat_password}
+      - EUREKA_URI=http://discovery-server:8761/eureka
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  ewm-main-db:
+    image: postgres:16.1
+    container_name: ewm-main-db
+    volumes:
+      - ./core/main-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB_MAIN_SERVICE:-ewm_main}
+      - POSTGRES_USER=${POSTGRES_USER_MAIN_SERVICE:-ewm_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_MAIN_SERVICE:-ewm_password}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER"]
       timeout: 5s
       interval: 5s
       retries: 10
@@ -44,29 +93,37 @@ services:
         condition: service_healthy
       ewm-main-db:
         condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_MAIN_SERVICE}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_MAIN_SERVICE}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_MAIN_SERVICE}
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_MAIN_SERVICE:-jdbc:postgresql://ewm-main-db:5432/ewm_main}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_MAIN_SERVICE:-ewm_user}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_MAIN_SERVICE:-ewm_password}
+      - EUREKA_URI=http://discovery-server:8761/eureka
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       timeout: 5s
       interval: 5s
       retries: 10
 
-  ewm-main-db:
-    image: postgres:16.1
-    container_name: ewm-main-db
-    volumes:
-      - ./core/main-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+  gateway-server:
+    build: infra/gateway-server
+    container_name: gateway-server
     ports:
-      - "5433:5432"
+      - "8080:8080"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      ewm-service:
+        condition: service_healthy
     environment:
-      - POSTGRES_DB=${POSTGRES_DB_MAIN_SERVICE}
-      - POSTGRES_USER=${POSTGRES_USER_MAIN_SERVICE}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_MAIN_SERVICE}
+      - EUREKA_URI=http://discovery-server:8761/eureka
     healthcheck:
-      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       timeout: 5s
       interval: 5s
       retries: 10
