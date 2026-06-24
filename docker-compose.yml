@@ -58,7 +58,7 @@ services:
     image: postgres:16.1
     container_name: ewm-main-db
     volumes:
-      - ./main-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./core/main-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
     ports:
       - "5433:5432"
     environment:
