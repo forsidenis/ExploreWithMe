@@ -61,7 +61,7 @@ services:
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_STAT_SERVER:-stat_password}
       - JAVA_OPTS=-Dserver.port=9090
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:9090/actuator/health" ]
       timeout: 5s
       interval: 5s
       retries: 10
