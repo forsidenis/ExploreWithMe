@@ -1,0 +1,15 @@
+server:
+  port: 0
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL_STAT_SERVER}
+    username: ${SPRING_DATASOURCE_USERNAME_STAT_SERVER}
+    password: ${SPRING_DATASOURCE_PASSWORD_STAT_SERVER}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: false
