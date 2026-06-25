@@ -1,3 +1,6 @@
+server:
+  port: 8888
+
 spring:
   application:
     name: config-server
@@ -7,12 +10,14 @@ spring:
     config:
       server:
         native:
-          searchLocations: classpath:/config
-
-server:
-  port: 8888
+          searchLocations: classpath:config/
 
 eureka:
   client:
     serviceUrl:
       defaultZone: http://discovery-server:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.cloud.client.ip-address}:${server.port}
+    lease-renewal-interval-in-seconds: 10
+    lease-expiration-duration-in-seconds: 30
