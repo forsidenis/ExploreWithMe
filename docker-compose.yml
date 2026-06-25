@@ -59,7 +59,7 @@ services:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER:-jdbc:postgresql://stat-server-db:5432/stat_db}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER:-stat_user}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_STAT_SERVER:-stat_password}
-      - EUREKA_URI=http://discovery-server:8761/eureka
+      - JAVA_OPTS=-Dserver.port=9090
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
       timeout: 5s
@@ -86,8 +86,6 @@ services:
   ewm-service:
     build: core/main-service
     container_name: ewm-service
-    ports:
-      - "8080:8080"
     depends_on:
       stat-server:
         condition: service_healthy
@@ -101,7 +99,7 @@ services:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_MAIN_SERVICE:-jdbc:postgresql://ewm-main-db:5432/ewm_main}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_MAIN_SERVICE:-ewm_user}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_MAIN_SERVICE:-ewm_password}
-      - EUREKA_URI=http://discovery-server:8761/eureka
+      - JAVA_OPTS=-Dserver.port=8080
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       timeout: 5s
@@ -121,7 +119,7 @@ services:
       ewm-service:
         condition: service_healthy
     environment:
-      - EUREKA_URI=http://discovery-server:8761/eureka
+      - JAVA_OPTS=-Dserver.port=8080
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
       timeout: 5s
