@@ -58,10 +58,11 @@ public class StatsClient {
     public EndpointHitDto hit(EndpointHitDto hit) {
         URI uri = getServiceUri("/hit");
         log.debug("Sending hit to {}", uri);
-        return restClient.post()
+
+        RestClient.RequestBodySpec request = restClient.post()
                 .uri(uri)
-                .body(hit)
-                .retrieve()
+                .body(hit);
+        return request.retrieve()
                 .body(EndpointHitDto.class);
     }
 
@@ -80,10 +81,9 @@ public class StatsClient {
         String path = builder.build().toUriString();
         URI uri = getServiceUri(path);
         log.debug("Getting stats from {}", uri);
-        ViewStatsDto[] response = restClient.get()
-                .uri(uri)
-                .retrieve()
-                .body(ViewStatsDto[].class);
+
+        RestClient.RequestHeadersSpec<?> request = restClient.get().uri(uri);
+        ViewStatsDto[] response = request.retrieve().body(ViewStatsDto[].class);
         return response != null ? Arrays.asList(response) : Collections.emptyList();
     }
 }
