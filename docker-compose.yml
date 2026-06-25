@@ -26,9 +26,9 @@ services:
       interval: 5s
       retries: 10
 
-  stat-server-db:
+  stats-server-db:
     image: postgres:16.1
-    container_name: stat-server-db
+    container_name: stats-server-db
     volumes:
       - ./stat/stats-server/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
     ports:
@@ -43,20 +43,20 @@ services:
       interval: 5s
       retries: 10
 
-  stat-server:
+  stats-server:
     build: stat/stats-server
-    container_name: stat-server
+    container_name: stats-server
     ports:
       - "9090:9090"
     depends_on:
-      stat-server-db:
+      stats-server-db:
         condition: service_healthy
       discovery-server:
         condition: service_healthy
       config-server:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER:-jdbc:postgresql://stat-server-db:5432/stat_db}
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER:-jdbc:postgresql://stats-server-db:5432/stat_db}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER:-stat_user}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_STAT_SERVER:-stat_password}
       - JAVA_OPTS=-Dserver.port=9090
@@ -87,7 +87,7 @@ services:
     build: core/main-service
     container_name: ewm-service
     depends_on:
-      stat-server:
+      stats-server:
         condition: service_healthy
       ewm-main-db:
         condition: service_healthy
