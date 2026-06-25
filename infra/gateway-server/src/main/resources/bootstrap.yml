@@ -9,6 +9,7 @@ spring:
       fail-fast: true
       retry:
         useRandomPolicy: true
+      import: "configserver:"
 
 eureka:
   client:

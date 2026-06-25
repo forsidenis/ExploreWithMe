@@ -121,7 +121,7 @@ services:
     environment:
       - JAVA_OPTS=-Dserver.port=8080
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       timeout: 5s
       interval: 5s
       retries: 10
