@@ -9,12 +9,6 @@ spring:
           enabled: false
       routes:
         - id: main-service
-          uri: lb://MAIN-SERVICE
+          uri: http://ewm-service:8080
           predicates:
             - Path=/**
-    loadbalancer:
-      retry:
-        enabled: true
-      cache:
-        enabled: true
-        ttl: 10s
