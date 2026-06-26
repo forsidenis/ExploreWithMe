@@ -20,8 +20,10 @@ services:
         condition: service_healthy
     environment:
       - EUREKA_URI=http://discovery-server:8761/eureka
+      - SPRING_PROFILES_ACTIVE=native
+      - SERVER_PORT=8888
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
       timeout: 5s
       interval: 5s
       retries: 10
@@ -34,11 +36,11 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=${POSTGRES_DB_STAT_SERVER:-stat_db}
-      - POSTGRES_USER=${POSTGRES_USER_STAT_SERVER:-stat_user}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_STAT_SERVER:-stat_password}
+      - POSTGRES_DB=${POSTGRES_DB_STAT_SERVER}
+      - POSTGRES_USER=${POSTGRES_USER_STAT_SERVER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_STAT_SERVER}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER"]
+      test: [ "CMD-SHELL", "pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER" ]
       timeout: 5s
       interval: 5s
       retries: 10
@@ -56,9 +58,10 @@ services:
       config-server:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER:-jdbc:postgresql://stats-server-db:5432/stat_db}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER:-stat_user}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_STAT_SERVER:-stat_password}
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_STAT_SERVER}
+      - EUREKA_URI=http://discovery-server:8761/eureka
       - JAVA_OPTS=-Dserver.port=9090
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9090/actuator/health" ]
@@ -74,9 +77,9 @@ services:
     ports:
       - "5433:5432"
     environment:
-      - POSTGRES_DB=${POSTGRES_DB_MAIN_SERVICE:-ewm_main}
-      - POSTGRES_USER=${POSTGRES_USER_MAIN_SERVICE:-ewm_user}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_MAIN_SERVICE:-ewm_password}
+      - POSTGRES_DB=${POSTGRES_DB_MAIN_SERVICE}
+      - POSTGRES_USER=${POSTGRES_USER_MAIN_SERVICE}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_MAIN_SERVICE}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER"]
       timeout: 5s
@@ -96,9 +99,9 @@ services:
       config-server:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_MAIN_SERVICE:-jdbc:postgresql://ewm-main-db:5432/ewm_main}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_MAIN_SERVICE:-ewm_user}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_MAIN_SERVICE:-ewm_password}
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_MAIN_SERVICE}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_MAIN_SERVICE}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_MAIN_SERVICE}
       - JAVA_OPTS=-Dserver.port=8080
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
