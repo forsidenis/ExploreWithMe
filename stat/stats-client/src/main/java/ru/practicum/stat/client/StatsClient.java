@@ -78,8 +78,7 @@ public class StatsClient {
         if (uris != null && !uris.isEmpty()) {
             builder.queryParam("uris", String.join(",", uris));
         }
-        String path = builder.build().toUriString();
-        URI uri = getServiceUri(path);
+        URI uri = getServiceUri(builder.build().encode().toUriString());
         log.debug("Getting stats from {}", uri);
 
         RestClient.RequestHeadersSpec<?> request = restClient.get().uri(uri);
