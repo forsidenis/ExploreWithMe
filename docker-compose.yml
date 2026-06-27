@@ -1,25 +1,36 @@
 services:
-  stat-server:
-    build: stat/stats-server
-    container_name: stat-server
+  discovery-server:
+    build: infra/discovery-server
+    container_name: discovery-server
     ports:
-      - "9090:9090"
-    depends_on:
-      stat-server-db:
-        condition: service_healthy
-    environment:
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_STAT_SERVER}
+      - "8761:8761"
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9090/actuator/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
       timeout: 5s
       interval: 5s
       retries: 10
 
-  stat-server-db:
+  config-server:
+    build: infra/config-server
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+    environment:
+      - EUREKA_URI=http://discovery-server:8761/eureka
+      - SPRING_PROFILES_ACTIVE=native
+      - SERVER_PORT=8888
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  stats-server-db:
     image: postgres:16.1
-    container_name: stat-server-db
+    container_name: stats-server-db
     volumes:
       - ./stat/stats-server/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
     ports:
@@ -29,27 +40,31 @@ services:
       - POSTGRES_USER=${POSTGRES_USER_STAT_SERVER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_STAT_SERVER}
     healthcheck:
-      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      test: [ "CMD-SHELL", "pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER" ]
       timeout: 5s
       interval: 5s
       retries: 10
 
-  ewm-service:
-    build: main-service
-    container_name: ewm-service
+  stats-server:
+    build: stat/stats-server
+    container_name: stats-server
     ports:
-      - "8080:8080"
+      - "9090:9090"
     depends_on:
-      stat-server:
+      stats-server-db:
         condition: service_healthy
-      ewm-main-db:
+      discovery-server:
+        condition: service_healthy
+      config-server:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_MAIN_SERVICE}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_MAIN_SERVICE}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_MAIN_SERVICE}
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_STAT_SERVER}
+      - EUREKA_URI=http://discovery-server:8761/eureka
+      - JAVA_OPTS=-Dserver.port=9090
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:9090/actuator/health" ]
       timeout: 5s
       interval: 5s
       retries: 10
@@ -58,7 +73,7 @@ services:
     image: postgres:16.1
     container_name: ewm-main-db
     volumes:
-      - ./main-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
+      - ./core/main-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql
     ports:
       - "5433:5432"
     environment:
@@ -66,7 +81,50 @@ services:
       - POSTGRES_USER=${POSTGRES_USER_MAIN_SERVICE}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD_MAIN_SERVICE}
     healthcheck:
-      test: pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER
+      test: ["CMD-SHELL", "pg_isready -q -d $$POSTGRES_DB -U $$POSTGRES_USER"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  ewm-service:
+    build: core/main-service
+    container_name: ewm-service
+    depends_on:
+      stats-server:
+        condition: service_healthy
+      ewm-main-db:
+        condition: service_healthy
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_MAIN_SERVICE}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_MAIN_SERVICE}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_MAIN_SERVICE}
+      - JAVA_OPTS=-Dserver.port=8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
+
+  gateway-server:
+    build: infra/gateway-server
+    container_name: gateway-server
+    ports:
+      - "8080:8080"
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      config-server:
+        condition: service_healthy
+      ewm-service:
+        condition: service_healthy
+    environment:
+      - JAVA_OPTS=-Dserver.port=8080
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       timeout: 5s
       interval: 5s
       retries: 10
