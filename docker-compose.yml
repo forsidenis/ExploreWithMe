@@ -48,7 +48,6 @@ services:
       discovery-server:
         condition: service_healthy
       config-server:
-        condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER}
@@ -88,8 +87,7 @@ services:
         condition: service_healthy
       discovery-server:
         condition: service_healthy
-      config-server:
-        condition: service_healthy
+      config-server:   # без условия
     environment:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_MAIN_SERVICE}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_MAIN_SERVICE}
@@ -109,8 +107,7 @@ services:
     depends_on:
       discovery-server:
         condition: service_healthy
-      config-server:
-        condition: service_healthy
+      config-server:   # без условия
       ewm-service:
         condition: service_healthy
     environment:
