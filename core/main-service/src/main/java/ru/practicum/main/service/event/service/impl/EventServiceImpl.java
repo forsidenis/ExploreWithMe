@@ -29,6 +29,7 @@ import ru.practicum.stat.dto.ViewStatsDto;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -275,9 +276,13 @@ public class EventServiceImpl implements EventService {
     private Long getViewsForEvent(Long eventId, LocalDateTime start) {
         if (start == null) start = LocalDateTime.now().minusYears(10);
         List<String> uris = List.of("/events/" + eventId);
-        List<ViewStatsDto> stats = statsClient.getStats(start, LocalDateTime.now(), uris, true);
-        if (!stats.isEmpty()) {
-            return stats.getFirst().getHits();
+        try {
+            List<ViewStatsDto> stats = statsClient.getStats(start, LocalDateTime.now(), uris, true);
+            if (!stats.isEmpty()) {
+                return stats.getFirst().getHits();
+            }
+        } catch (Exception e) {
+            log.warn("Не удалось получить просмотры для события {}", eventId, e);
         }
         return 0L;
     }
@@ -295,45 +300,54 @@ public class EventServiceImpl implements EventService {
     private List<EventShortDto> enrichEventsWithStats(List<Event> events, boolean onlyPublished) {
         if (events.isEmpty()) return List.of();
 
-        Map<Long, Long> confirmedMap = events.stream()
+        final Map<Long, Long> confirmedMap = events.stream()
                 .collect(Collectors.toMap(
                         Event::getId,
                         e -> requestRepository.countByEventIdAndStatus(e.getId().intValue(), RequestStatus.CONFIRMED)
                 ));
 
-        LocalDateTime earliestStart = events.stream()
+        final LocalDateTime earliestStart = events.stream()
                 .map(e -> e.getPublishedOn() != null ? e.getPublishedOn() : e.getCreatedOn())
                 .min(LocalDateTime::compareTo)
                 .orElse(LocalDateTime.now().minusYears(10));
 
-        List<String> uris = events.stream()
+        final List<String> uris = events.stream()
                 .map(e -> "/events/" + e.getId())
                 .collect(Collectors.toList());
 
-        List<ViewStatsDto> stats = statsClient.getStats(earliestStart, LocalDateTime.now(), uris, false);
-        Map<Long, Long> viewsMap = stats.stream()
-                .collect(Collectors.toMap(
-                        v -> Long.parseLong(v.getUri().substring(v.getUri().lastIndexOf('/') + 1)),
-                        ViewStatsDto::getHits,
-                        (a, b) -> a
-                ));
+        final List<Long> eventIds = events.stream().map(Event::getId).collect(Collectors.toList());
 
+        Map<Long, Long> viewsMap;
+        try {
+            final List<ViewStatsDto> stats = statsClient.getStats(earliestStart, LocalDateTime.now(), uris, false);
+            viewsMap = stats.stream()
+                    .collect(Collectors.toMap(
+                            v -> Long.parseLong(v.getUri().substring(v.getUri().lastIndexOf('/') + 1)),
+                            ViewStatsDto::getHits,
+                            (a, b) -> a
+                    ));
+        } catch (Exception e) {
+            log.error("Не удалось получить статистику просмотров для событий {}", eventIds, e);
+            viewsMap = new HashMap<>();
+        }
+
+        final Map<Long, Long> finalViewsMap = viewsMap;
         return events.stream()
                 .map(e -> EventMapper.toShortDto(
                         e,
                         confirmedMap.getOrDefault(e.getId(), 0L),
-                        viewsMap.getOrDefault(e.getId(), 0L)))
+                        finalViewsMap.getOrDefault(e.getId(), 0L)))
                 .collect(Collectors.toList());
     }
 
     private List<EventFullDto> enrichEventsFullWithStats(List<Event> events) {
         if (events.isEmpty()) return List.of();
 
-        List<Long> eventIds = events.stream()
+        final List<Long> eventIds = events.stream()
                 .map(Event::getId)
                 .collect(Collectors.toList());
 
-        Map<Long, Long> confirmedMap = requestRepository
+        final Map<Long, Long> confirmedMap = requestRepository
                 .findAllByEventIdInAndStatus(eventIds, RequestStatus.CONFIRMED)
                 .stream()
                 .collect(Collectors.groupingBy(
@@ -341,28 +355,35 @@ public class EventServiceImpl implements EventService {
                         Collectors.counting()
                 ));
 
-        LocalDateTime earliestStart = events.stream()
+        final LocalDateTime earliestStart = events.stream()
                 .map(e -> e.getPublishedOn() != null ? e.getPublishedOn() : e.getCreatedOn())
                 .min(LocalDateTime::compareTo)
                 .orElse(LocalDateTime.now().minusYears(10));
 
-        List<String> uris = events.stream()
+        final List<String> uris = events.stream()
                 .map(e -> "/events/" + e.getId())
                 .collect(Collectors.toList());
 
-        List<ViewStatsDto> stats = statsClient.getStats(earliestStart, LocalDateTime.now(), uris, false);
-        Map<Long, Long> viewsMap = stats.stream()
-                .collect(Collectors.toMap(
-                        v -> Long.parseLong(v.getUri().substring(v.getUri().lastIndexOf('/') + 1)),
-                        ViewStatsDto::getHits,
-                        (a, b) -> a
-                ));
+        Map<Long, Long> viewsMap;
+        try {
+            final List<ViewStatsDto> stats = statsClient.getStats(earliestStart, LocalDateTime.now(), uris, false);
+            viewsMap = stats.stream()
+                    .collect(Collectors.toMap(
+                            v -> Long.parseLong(v.getUri().substring(v.getUri().lastIndexOf('/') + 1)),
+                            ViewStatsDto::getHits,
+                            (a, b) -> a
+                    ));
+        } catch (Exception e) {
+            log.error("Не удалось получить статистику просмотров для событий {}", eventIds, e);
+            viewsMap = new HashMap<>();
+        }
 
+        final Map<Long, Long> finalViewsMap = viewsMap;
         return events.stream()
                 .map(e -> EventMapper.toFullDto(
                         e,
                         confirmedMap.getOrDefault(e.getId(), 0L),
-                        viewsMap.getOrDefault(e.getId(), 0L)))
+                        finalViewsMap.getOrDefault(e.getId(), 0L)))
                 .collect(Collectors.toList());
     }
 }

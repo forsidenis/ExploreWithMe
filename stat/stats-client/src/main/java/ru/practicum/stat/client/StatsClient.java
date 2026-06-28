@@ -41,15 +41,20 @@ public class StatsClient {
      * Использует DiscoveryClient для получения адреса и порта активного экземпляра.
      */
     private URI getServiceUri(String path) {
-        ServiceInstance instance = retryTemplate.execute(context -> {
-            List<ServiceInstance> instances = discoveryClient.getInstances(statsServiceId);
-            if (instances.isEmpty()) {
-                throw new IllegalStateException("No instances of service " + statsServiceId + " found in Discovery");
-            }
-            return instances.get(0);
-        });
-        String baseUrl = "http://" + instance.getHost() + ":" + instance.getPort();
-        return URI.create(baseUrl + path);
+        try {
+            ServiceInstance instance = retryTemplate.execute(context -> {
+                List<ServiceInstance> instances = discoveryClient.getInstances(statsServiceId);
+                if (instances.isEmpty()) {
+                    throw new IllegalStateException("No instances of service " + statsServiceId + " found in Discovery");
+                }
+                return instances.get(0);
+            });
+            String baseUrl = "http://" + instance.getHost() + ":" + instance.getPort();
+            return URI.create(baseUrl + path);
+        } catch (Exception e) {
+            log.error("Не удалось получить URI для сервиса статистики: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     /**
