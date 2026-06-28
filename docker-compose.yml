@@ -47,17 +47,19 @@ services:
         condition: service_healthy
       discovery-server:
         condition: service_healthy
+      # config-server убран – не ждём, discovery сам найдёт
     environment:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_STAT_SERVER}
       - EUREKA_URI=http://discovery-server:8761/eureka
       - JAVA_OPTS=-Dserver.port=9090
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9090/actuator/health" ]
-      timeout: 5s
-      interval: 5s
-      retries: 10
+    # healthcheck закомментирован, чтобы видеть логи
+    # healthcheck:
+    #   test: [ "CMD", "curl", "-f", "http://localhost:9090/actuator/health" ]
+    #   timeout: 5s
+    #   interval: 5s
+    #   retries: 10
 
   ewm-main-db:
     image: postgres:16.1
