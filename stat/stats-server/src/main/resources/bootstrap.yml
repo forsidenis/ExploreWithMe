@@ -3,13 +3,13 @@ spring:
     name: stats-server
   cloud:
     config:
+      uri: http://config-server:8888
       discovery:
-        enabled: true
-        service-id: config-server
+        enabled: false
       fail-fast: true
       retry:
-        max-attempts: 20
-        initial-interval: 5000
+        max-attempts: 5
+        initial-interval: 2000
         multiplier: 1.5
 
 eureka:
