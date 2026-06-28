@@ -13,20 +13,12 @@ services:
   config-server:
     build: infra/config-server
     container_name: config-server
-    ports:
-      - "8888:8888"
     depends_on:
       discovery-server:
         condition: service_healthy
-    environment:
-      - EUREKA_URI=http://discovery-server:8761/eureka
-      - SPRING_PROFILES_ACTIVE=native
-      - SERVER_PORT=8888
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
-      timeout: 5s
-      interval: 5s
-      retries: 10
+      environment:
+        - EUREKA_URI=http://discovery-server:8761/eureka
+        - SPRING_PROFILES_ACTIVE=native
 
   stats-server-db:
     image: postgres:16.1
@@ -56,7 +48,6 @@ services:
       discovery-server:
         condition: service_healthy
       config-server:
-        condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER}
@@ -97,7 +88,6 @@ services:
       discovery-server:
         condition: service_healthy
       config-server:
-        condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_MAIN_SERVICE}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_MAIN_SERVICE}
@@ -118,7 +108,6 @@ services:
       discovery-server:
         condition: service_healthy
       config-server:
-        condition: service_healthy
       ewm-service:
         condition: service_healthy
     environment:

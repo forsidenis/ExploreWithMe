@@ -8,8 +8,8 @@ spring:
         service-id: config-server
       fail-fast: true
       retry:
-        max-attempts: 5
-        initial-interval: 2000
+        max-attempts: 10
+        initial-interval: 5000
         multiplier: 1.5
 
 eureka:
