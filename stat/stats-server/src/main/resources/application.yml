@@ -1,3 +1,7 @@
 server:
   port: 0
 
+spring:
+  cloud:
+    bootstrap:
+      enabled: true
