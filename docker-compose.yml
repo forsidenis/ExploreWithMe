@@ -19,11 +19,6 @@ services:
     environment:
       - EUREKA_URI=http://discovery-server:8761/eureka
       - SPRING_PROFILES_ACTIVE=native
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
-      timeout: 5s
-      interval: 5s
-      retries: 10
 
   stats-server-db:
     image: postgres:16.1
@@ -51,8 +46,6 @@ services:
       stats-server-db:
         condition: service_healthy
       discovery-server:
-        condition: service_healthy
-      config-server:
         condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER}
@@ -92,8 +85,6 @@ services:
       ewm-main-db:
         condition: service_healthy
       discovery-server:
-        condition: service_healthy
-      config-server:
         condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_MAIN_SERVICE}

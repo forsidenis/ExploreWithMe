@@ -5,7 +5,7 @@ spring:
   application:
     name: stats-server
   config:
-    import: optional:configserver:
+    import: "optional:configserver:"
   cloud:
     config:
       discovery:
@@ -21,7 +21,5 @@ eureka:
   client:
     serviceUrl:
       defaultZone: http://discovery-server:8761/eureka
-    register-with-eureka: true
-    fetch-registry: true
   instance:
     prefer-ip-address: true
