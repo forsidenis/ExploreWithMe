@@ -1,6 +1,8 @@
 package ru.practicum.stat.client;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.retry.support.RetryTemplate;
@@ -18,62 +20,76 @@ import java.util.Collections;
 import java.util.List;
 
 @Component
+@ConditionalOnProperty(name = "stats.client.enabled", havingValue = "true", matchIfMissing = true)
 @Slf4j
 public class StatsClient {
     private final RestClient restClient;
     private final DiscoveryClient discoveryClient;
     private final RetryTemplate retryTemplate;
-    // Имя сервиса статистики, под которым он зарегистрирован в Eureka
     private final String statsServiceId = "stats-server";
+    private final String statsServerUrl;
 
-    public StatsClient(DiscoveryClient discoveryClient) {
+    // Конструктор для обычного использования (с DiscoveryClient)
+    public StatsClient(DiscoveryClient discoveryClient,
+                       @Value("${stats.server.url:}") String statsServerUrl) {
         this.discoveryClient = discoveryClient;
+        this.statsServerUrl = statsServerUrl;
         this.restClient = RestClient.builder().build();
-        // Настраиваем RetryTemplate: 3 попытки с паузой 3 секунды между ними
         this.retryTemplate = RetryTemplate.builder()
                 .maxAttempts(3)
                 .fixedBackoff(3000)
                 .build();
     }
 
-    /**
-     * Получить URI для заданного пути к сервису статистики.
-     * Использует DiscoveryClient для получения адреса и порта активного экземпляра.
-     */
+    // Защищённый конструктор для заглушки (без DiscoveryClient)
+    protected StatsClient() {
+        this.discoveryClient = null;
+        this.statsServerUrl = null;
+        this.restClient = RestClient.builder().build();
+        this.retryTemplate = RetryTemplate.builder()
+                .maxAttempts(3)
+                .fixedBackoff(3000)
+                .build();
+    }
+
     private URI getServiceUri(String path) {
-        try {
-            ServiceInstance instance = retryTemplate.execute(context -> {
-                List<ServiceInstance> instances = discoveryClient.getInstances(statsServiceId);
-                if (instances.isEmpty()) {
-                    throw new IllegalStateException("No instances of service " + statsServiceId + " found in Discovery");
+        if (discoveryClient != null) {
+            try {
+                ServiceInstance instance = retryTemplate.execute(context -> {
+                    List<ServiceInstance> instances = discoveryClient.getInstances(statsServiceId);
+                    if (instances.isEmpty()) {
+                        throw new IllegalStateException("No instances of service " + statsServiceId + " found in Discovery");
+                    }
+                    return instances.get(0);
+                });
+                String baseUrl = "http://" + instance.getHost() + ":" + instance.getPort();
+                return URI.create(baseUrl + path);
+            } catch (Exception e) {
+                log.error("Не удалось получить URI через DiscoveryClient: {}", e.getMessage());
+                if (statsServerUrl != null && !statsServerUrl.isEmpty()) {
+                    log.warn("Использование fallback URL: {}", statsServerUrl);
+                    return URI.create(statsServerUrl + path);
                 }
-                return instances.get(0);
-            });
-            String baseUrl = "http://" + instance.getHost() + ":" + instance.getPort();
-            return URI.create(baseUrl + path);
-        } catch (Exception e) {
-            log.error("Не удалось получить URI для сервиса статистики: {}", e.getMessage(), e);
-            throw e;
+                throw e;
+            }
+        } else {
+            if (statsServerUrl != null && !statsServerUrl.isEmpty()) {
+                return URI.create(statsServerUrl + path);
+            }
+            throw new IllegalStateException("StatsClient не может получить URI: нет DiscoveryClient и не задан stats.server.url");
         }
     }
 
-    /**
-     * Отправить запрос на сохранение информации о посещении (hit).
-     */
     public EndpointHitDto hit(EndpointHitDto hit) {
         URI uri = getServiceUri("/hit");
         log.debug("Sending hit to {}", uri);
-
-        RestClient.RequestBodySpec request = restClient.post()
+        return restClient.post()
                 .uri(uri)
-                .body(hit);
-        return request.retrieve()
+                .body(hit)
+                .retrieve()
                 .body(EndpointHitDto.class);
     }
 
-    /**
-     * Получить статистику посещений по заданным параметрам.
-     */
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end,
                                        List<String> uris, Boolean unique) {
         UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/stats")
@@ -86,8 +102,10 @@ public class StatsClient {
         URI uri = getServiceUri(builder.build().encode().toUriString());
         log.debug("Getting stats from {}", uri);
 
-        RestClient.RequestHeadersSpec<?> request = restClient.get().uri(uri);
-        ViewStatsDto[] response = request.retrieve().body(ViewStatsDto[].class);
+        ViewStatsDto[] response = restClient.get()
+                .uri(uri)
+                .retrieve()
+                .body(ViewStatsDto[].class);
         return response != null ? Arrays.asList(response) : Collections.emptyList();
     }
 }
