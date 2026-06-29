@@ -7,14 +7,18 @@ spring:
   config:
     activate:
       on-profile: docker
-    datasource:
-      url: jdbc:postgresql://ewm-main-db:5432/ewm-main
-      username: main
-      password: main
-      driver-class-name: org.postgresql.Driver
-    jpa:
+  datasource:
+    url: jdbc:postgresql://ewm-main-db:5432/ewm-main
+    username: main
+    password: main
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    properties:
       hibernate:
-        ddl-auto: none
+        format_sql: false
 
 eureka:
   client:
