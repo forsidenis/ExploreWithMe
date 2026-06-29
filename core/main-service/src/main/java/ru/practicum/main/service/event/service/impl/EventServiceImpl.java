@@ -53,7 +53,7 @@ public class EventServiceImpl implements EventService {
     public EventFullDto createEvent(Long userId, NewEventDto dto) {
         log.info("Создание события пользователем {}", userId);
 
-        User user = userRepository.findById(Math.toIntExact(userId))
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
 
         Category category = categoryRepository.findById(dto.getCategory())
@@ -162,7 +162,7 @@ public class EventServiceImpl implements EventService {
             events = events.stream()
                     .filter(e -> {
                         if (e.getParticipantLimit() == 0) return true;
-                        long confirmed = requestRepository.countByEventIdAndStatus(e.getId().intValue(), RequestStatus.CONFIRMED);
+                        long confirmed = requestRepository.countByEventIdAndStatus(e.getId(), RequestStatus.CONFIRMED);
                         return confirmed < e.getParticipantLimit();
                     })
                     .collect(Collectors.toList());
@@ -258,19 +258,19 @@ public class EventServiceImpl implements EventService {
     // Вспомогательные методы
 
     private void checkUserExists(Long userId) {
-        if (!userRepository.existsById(Math.toIntExact(userId))) {
+        if (!userRepository.existsById(userId)) {
             throw new NotFoundException("Пользователь с id=" + userId + " не найден");
         }
     }
 
     private Event findEventByIdAndInitiator(Long eventId, Long userId) {
         return eventRepository.findById(eventId)
-                .filter(event -> event.getInitiator().getId().equals(Math.toIntExact(userId)))
+                .filter(event -> event.getInitiator().getId().equals(userId))
                 .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено или не принадлежит пользователю"));
     }
 
     private Long getConfirmedRequests(Long eventId) {
-        return requestRepository.countByEventIdAndStatus(eventId.intValue(), RequestStatus.CONFIRMED);
+        return requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
     }
 
     private Long getViewsForEvent(Long eventId, LocalDateTime start) {
@@ -307,7 +307,7 @@ public class EventServiceImpl implements EventService {
         final Map<Long, Long> confirmedMap = events.stream()
                 .collect(Collectors.toMap(
                         Event::getId,
-                        e -> requestRepository.countByEventIdAndStatus(e.getId().intValue(), RequestStatus.CONFIRMED)
+                        e -> requestRepository.countByEventIdAndStatus(e.getId(), RequestStatus.CONFIRMED)
                 ));
 
         final LocalDateTime earliestStart = events.stream()

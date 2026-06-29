@@ -39,7 +39,6 @@ public class UserServiceImpl implements UserService {
                     .toList();
             log.info("Список по ids: {}", users);
             return users;
-
         } else {
             log.info("Получение списка из первых {} пользователей с позиции {}: ", size, from);
             List<UserDto> users = userRepository.getUsers(from, size).stream()
@@ -51,9 +50,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional
-    public void deleteUser(Integer id) {
+    public void deleteUser(Long id) {   // Integer → Long
         log.info("Удаление пользователя с ID: {}", id);
-
         userRepository.deleteById(id);
     }
 
@@ -62,5 +60,4 @@ public class UserServiceImpl implements UserService {
             throw new AlreadyExistsException("Пользователь с адресом '" + request.getEmail() + "' уже существует");
         }
     }
-
 }

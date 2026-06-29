@@ -18,10 +18,9 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class ParticipationRequest {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(name = "created", nullable = false)
     private LocalDateTime created;

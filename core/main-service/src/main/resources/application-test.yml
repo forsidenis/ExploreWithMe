@@ -8,6 +8,7 @@ spring:
     properties:
       hibernate:
         format_sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
   sql:
     init:
       mode: always
@@ -23,6 +24,11 @@ spring:
   cloud:
     discovery:
       enabled: false
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClientAutoConfiguration
+      - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
+
 eureka:
   client:
     enabled: false
@@ -34,3 +40,5 @@ stats:
 logging:
   level:
     ru.practicum.main.service: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate: DEBUG

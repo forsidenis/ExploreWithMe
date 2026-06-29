@@ -9,24 +9,20 @@ import ru.practicum.main.service.request.model.RequestStatus;
 import java.util.List;
 import java.util.Optional;
 
-public interface RequestRepository extends JpaRepository<ParticipationRequest, Integer> {
+public interface RequestRepository extends JpaRepository<ParticipationRequest, Long> {
+    List<ParticipationRequest> findAllByRequesterId(Long userId);
 
-    List<ParticipationRequest> findAllByRequesterId(Integer userId);
+    Optional<ParticipationRequest> findByIdAndRequesterId(Long requestId, Long userId);
 
-    Optional<ParticipationRequest> findByIdAndRequesterId(Integer requestId, Integer userId);
+    Optional<ParticipationRequest> findByEventIdAndRequesterId(Long eventId, Long userId);
 
-    Optional<ParticipationRequest> findByEventIdAndRequesterId(Integer eventId, Integer userId);
+    List<ParticipationRequest> findAllByEventId(Long eventId);
 
-    List<ParticipationRequest> findAllByEventId(Integer eventId);
+    List<ParticipationRequest> findAllByIdIn(List<Long> ids);
 
-    List<ParticipationRequest> findAllByIdIn(List<Integer> ids);
+    boolean existsByEventIdAndRequesterIdAndStatus(Long eventId, Long requesterId, RequestStatus status);
 
-    boolean existsByEventIdAndRequesterIdAndStatus(Integer eventId, Integer requesterId, RequestStatus status);
-
-    @Query("SELECT COUNT(r) FROM ParticipationRequest r " +
-            "WHERE r.event.id = :eventId AND r.status = :status")
-    long countByEventIdAndStatus(@Param("eventId") Integer eventId,
-                                 @Param("status") RequestStatus status);
+    long countByEventIdAndStatus(Long eventId, RequestStatus status);
 
     List<ParticipationRequest> findAllByEventIdInAndStatus(List<Long> eventIds, RequestStatus status);
 }

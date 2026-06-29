@@ -29,7 +29,6 @@ public class StatsClient {
     private final String statsServiceId = "stats-server";
     private final String statsServerUrl;
 
-    // Конструктор для обычного использования (с DiscoveryClient)
     public StatsClient(DiscoveryClient discoveryClient,
                        @Value("${stats.server.url:}") String statsServerUrl) {
         this.discoveryClient = discoveryClient;
@@ -41,7 +40,6 @@ public class StatsClient {
                 .build();
     }
 
-    // Защищённый конструктор для заглушки (без DiscoveryClient)
     protected StatsClient() {
         this.discoveryClient = null;
         this.statsServerUrl = null;

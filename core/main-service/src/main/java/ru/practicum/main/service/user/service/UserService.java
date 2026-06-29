@@ -6,10 +6,9 @@ import ru.practicum.main.service.user.dto.UserDto;
 import java.util.List;
 
 public interface UserService {
-
     UserDto saveUser(NewUserRequest request);
 
     List<UserDto> getUsers(List<Long> ids, Long from, Long size);
 
-    void deleteUser(Integer id);
+    void deleteUser(Long id);
 }

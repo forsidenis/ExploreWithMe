@@ -52,7 +52,7 @@ public class RatingServiceImpl implements RatingService {
                                              EventRating.RatingType type) {
         log.info("Добавление оценки {} для события id={} пользователем id={}", type, eventId, userId);
 
-        User user = userRepository.findById(userId.intValue())
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
 
         Event event = eventRepository.findById(eventId)
@@ -63,8 +63,8 @@ public class RatingServiceImpl implements RatingService {
         }
 
         boolean userAttended = requestRepository.existsByEventIdAndRequesterIdAndStatus(
-                eventId.intValue(),
-                userId.intValue(),
+                eventId,
+                userId,
                 RequestStatus.CONFIRMED);
 
         if (!userAttended) {
@@ -129,7 +129,7 @@ public class RatingServiceImpl implements RatingService {
     public EventRatingListDto getUserRatings(Long userId, String rating, int from, int size) {
         log.info("Получение оценок пользователя id={}, rating={}, from={}, size={}", userId, rating, from, size);
 
-        if (!userRepository.existsById(userId.intValue())) {  // <--- ИСПРАВЛЕНО
+        if (!userRepository.existsById(userId)) {
             throw new NotFoundException("Пользователь с id=" + userId + " не найден");
         }
 

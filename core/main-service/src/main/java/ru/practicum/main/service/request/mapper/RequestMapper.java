@@ -12,15 +12,13 @@ import java.time.LocalDateTime;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class RequestMapper {
-
     public static ParticipationRequestDto toDto(ParticipationRequest request) {
         if (request == null) return null;
-
         return ParticipationRequestDto.builder()
                 .id(request.getId())
                 .created(request.getCreated())
-                .event(request.getEvent().getId().intValue())
-                .requester(request.getRequester().getId().intValue())
+                .event(request.getEvent().getId())
+                .requester(request.getRequester().getId())
                 .status(request.getStatus())
                 .build();
     }

@@ -36,7 +36,7 @@ public class RequestServiceImpl implements RequestService {
     private final EventRepository eventRepository;
 
     @Override
-    public List<ParticipationRequestDto> getUserRequests(Integer userId) {
+    public List<ParticipationRequestDto> getUserRequests(Long userId) {
         log.info("Получение заявок пользователя с id: {}", userId);
         checkUserExists(userId);
         return requestRepository.findAllByRequesterId(userId).stream()
@@ -46,7 +46,7 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     @Transactional
-    public ParticipationRequestDto createRequest(Integer userId, Integer eventId) {
+    public ParticipationRequestDto createRequest(Long userId, Long eventId) {
         log.info("Создание заявки от пользователя {} на событие {}", userId, eventId);
 
         // Проверка существования пользователя
@@ -54,7 +54,7 @@ public class RequestServiceImpl implements RequestService {
                 .orElseThrow(() -> new NotFoundException("Пользователь с id=" + userId + " не найден"));
 
         // Проверка существования события
-        Event event = eventRepository.findById(Long.valueOf(eventId))
+        Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено"));
 
         // Инициатор не может подать заявку на своё событие
@@ -97,7 +97,7 @@ public class RequestServiceImpl implements RequestService {
 
     @Override
     @Transactional
-    public ParticipationRequestDto cancelRequest(Integer userId, Integer requestId) {
+    public ParticipationRequestDto cancelRequest(Long userId, Long requestId) {
         log.info("Отмена заявки {} пользователем {}", requestId, userId);
 
         ParticipationRequest request = requestRepository.findByIdAndRequesterId(requestId, userId)
@@ -110,7 +110,7 @@ public class RequestServiceImpl implements RequestService {
         return RequestMapper.toDto(request);
     }
 
-    private void checkUserExists(Integer userId) {
+    private void checkUserExists(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException("Пользователь с id=" + userId + " не найден");
         }
@@ -121,10 +121,10 @@ public class RequestServiceImpl implements RequestService {
         log.info("Получение заявок на событие {} для пользователя {}", eventId, userId);
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new NotFoundException("Событие с id=" + eventId + " не найдено"));
-        if (event.getInitiator().getId().longValue() != userId) {
+        if (!event.getInitiator().getId().equals(userId)) {
             throw new ConditionsNotMetException("Пользователь не является инициатором события");
         }
-        return requestRepository.findAllByEventId(eventId.intValue()).stream()
+        return requestRepository.findAllByEventId(eventId).stream()
                 .map(RequestMapper::toDto)
                 .collect(Collectors.toList());
     }
@@ -140,14 +140,12 @@ public class RequestServiceImpl implements RequestService {
         log.info("Event initiator id = {}", event.getInitiator().getId());
 
         // Проверка прав инициатора
-        if (event.getInitiator().getId().longValue() != userId) {
+        if (!event.getInitiator().getId().equals(userId)) {
             log.warn("Initiator mismatch: event initiator id = {}, userId = {}", event.getInitiator().getId(), userId);
             throw new ConditionsNotMetException("Пользователь не является инициатором события");
         }
 
-        List<Integer> requestIds = updateRequest.getRequestIds().stream()
-                .map(Long::intValue)
-                .collect(Collectors.toList());
+        List<Long> requestIds = updateRequest.getRequestIds();
         List<ParticipationRequest> requests = requestRepository.findAllByIdIn(requestIds);
 
         // Проверка принадлежности событию
@@ -162,7 +160,7 @@ public class RequestServiceImpl implements RequestService {
         List<ParticipationRequest> rejected = new ArrayList<>();
 
         if (newStatus == RequestStatus.CONFIRMED) {
-            long confirmedCount = requestRepository.countByEventIdAndStatus(eventId.intValue(), RequestStatus.CONFIRMED);
+            long confirmedCount = requestRepository.countByEventIdAndStatus(eventId, RequestStatus.CONFIRMED);
             long limit = event.getParticipantLimit();
 
             for (ParticipationRequest req : requests) {
@@ -188,7 +186,7 @@ public class RequestServiceImpl implements RequestService {
                     req.setStatus(RequestStatus.REJECTED);
                     rejected.add(req);
                 } else {
-                    rejected.add(req); // уже отклонён
+                    rejected.add(req);
                 }
             }
         } else {

@@ -7,20 +7,14 @@ import ru.practicum.main.service.user.model.User;
 
 import java.util.List;
 
-public interface UserRepository extends JpaRepository<User, Integer> {
+public interface UserRepository extends JpaRepository<User, Long> {
 
     boolean existsByEmail(String email);
 
-    @Query("SELECT new ru.practicum.main.service.user.model.User(u.id, u.email, u.name) " +
-            "FROM User u " +
-            "WHERE u.id  IN :ids " +
-            "ORDER BY u.id")
+    @Query("SELECT u FROM User u WHERE u.id IN :ids ORDER BY u.id")
     List<User> getUsers(@Param("ids") List<Long> ids);
 
-    @Query(value = "SELECT new ru.practicum.main.service.user.model.User(u.id, u.email, u.name) " +
-            "FROM User u " +
-            "ORDER BY id " +
-            "LIMIT :size OFFSET :from")
+    @Query(value = "SELECT u FROM User u ORDER BY u.id LIMIT :size OFFSET :from")
     List<User> getUsers(@Param("from") Long from,
                         @Param("size") Long size);
 }

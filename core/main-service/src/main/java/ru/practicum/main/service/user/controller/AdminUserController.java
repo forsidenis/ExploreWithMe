@@ -38,8 +38,8 @@ public class AdminUserController {
 
     @DeleteMapping("/{userId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteUser(@PathVariable("userId") Integer userId) {
-        log.info("DELETE /admin/users/{userId} - Удаление пользователя с ID: {}", userId);
+    public void deleteUser(@PathVariable("userId") Long userId) {
+        log.info("DELETE /admin/users/{} - Удаление пользователя", userId);
         userService.deleteUser(userId);
     }
 }

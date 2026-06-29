@@ -9,7 +9,6 @@ import ru.practicum.main.service.user.model.User;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserMapper {
-
     public static User toEntity(NewUserRequest request) {
         return new User(null, request.getEmail(), request.getName());
     }
@@ -20,6 +19,6 @@ public class UserMapper {
 
     public static UserShortDto toShortDto(User user) {
         if (user == null) return null;
-        return new UserShortDto(user.getId().longValue(), user.getName());
+        return new UserShortDto(user.getId(), user.getName());
     }
 }

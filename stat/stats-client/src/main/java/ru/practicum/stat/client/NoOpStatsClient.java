@@ -18,7 +18,7 @@ public class NoOpStatsClient extends StatsClient {
     @Override
     public EndpointHitDto hit(EndpointHitDto hit) {
         log.debug("No-op hit: {}", hit);
-        return hit;  // просто возвращаем полученный объект
+        return hit;
     }
 
     @Override
