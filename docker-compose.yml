@@ -61,7 +61,7 @@ services:
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_STAT_SERVER}
       - EUREKA_URI=http://discovery-server:8761/eureka
-      - SERVER_PORT=9090   # переопределяет server.port: 0 для CI
+      - SERVER_PORT=9090
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
       timeout: 5s
@@ -88,8 +88,6 @@ services:
   ewm-service:
     build: core/main-service
     container_name: ewm-service
-    ports:
-      - "8080:8080"
     depends_on:
       stats-server:
         condition: service_healthy
