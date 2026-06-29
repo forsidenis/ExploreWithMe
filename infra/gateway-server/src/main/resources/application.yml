@@ -9,7 +9,7 @@ spring:
       discovery:
         locator:
           enabled: true
-          lower-case-service-id: true
+          lower-case-service-id: false
       routes:
         - id: main-service
           uri: lb://MAIN-SERVICE
