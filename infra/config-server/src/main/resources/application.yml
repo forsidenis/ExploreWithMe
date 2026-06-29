@@ -1,5 +1,5 @@
 server:
-  port: 8888
+  port: 0
 
 spring:
   application:
@@ -15,6 +15,9 @@ spring:
 eureka:
   client:
     serviceUrl:
-      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka}
+      defaultZone: ${EUREKA_URI:http://discovery-server:8761/eureka}
+    register-with-eureka: true
+    fetch-registry: true
   instance:
     prefer-ip-address: true
+    appname: CONFIG-SERVER

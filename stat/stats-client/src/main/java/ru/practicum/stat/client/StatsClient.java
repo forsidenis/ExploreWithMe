@@ -89,7 +89,7 @@ public class StatsClient {
                     .body(EndpointHitDto.class);
         } catch (Exception e) {
             log.error("Ошибка при отправке hit: {}", e.getMessage(), e);
-            throw e; // или вернуть fallback
+            throw e;
         }
     }
 

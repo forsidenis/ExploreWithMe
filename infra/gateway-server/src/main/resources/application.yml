@@ -4,12 +4,19 @@ server:
 spring:
   application:
     name: gateway-server
+  config:
+    import: "configserver:"
   cloud:
+    config:
+      discovery:
+        enabled: true
+        service-id: CONFIG-SERVER
+      fail-fast: true
     gateway:
       discovery:
         locator:
           enabled: true
-          lower-case-service-id: false
+          lower-case-service-id: true
       routes:
         - id: main-service
           uri: lb://MAIN-SERVICE

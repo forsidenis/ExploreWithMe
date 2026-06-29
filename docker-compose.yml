@@ -55,7 +55,7 @@ services:
       discovery-server:
         condition: service_healthy
       config-server:
-        condition: service_healthy
+        condition: service_started
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - SERVER_PORT=9090
@@ -97,7 +97,7 @@ services:
       discovery-server:
         condition: service_healthy
       config-server:
-        condition: service_healthy
+        condition: service_started
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://ewm-main-db:5432/ewm-main
       - SPRING_DATASOURCE_USERNAME=main
@@ -122,11 +122,13 @@ services:
         condition: service_healthy
       ewm-service:
         condition: service_healthy
+      config-server:
+        condition: service_started
     environment:
       - SERVER_PORT=8080
       - SPRING_PROFILES_ACTIVE=docker
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       timeout: 5s
       interval: 5s
       retries: 10
