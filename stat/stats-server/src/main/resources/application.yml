@@ -4,6 +4,17 @@ server:
 spring:
   application:
     name: stats-server
+  config:
+    activate:
+      on-profile: docker
+    datasource:
+      url: jdbc:postgresql://ewm-main-db:5432/ewm-main
+      username: main
+      password: main
+      driver-class-name: org.postgresql.Driver
+    jpa:
+      hibernate:
+        ddl-auto: none
 
 eureka:
   client:
