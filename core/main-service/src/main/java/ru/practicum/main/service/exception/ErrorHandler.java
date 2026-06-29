@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Objects;
@@ -24,65 +22,59 @@ public class ErrorHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleMethodArgumentNotValidException(final MethodArgumentNotValidException e) {
-        log.info("400 {}", e.getMessage(), e);
+        log.warn("400 {}", e.getMessage(), e);
         String errorMessage = Objects.requireNonNull(e.getBindingResult().getFieldError()).getDefaultMessage();
-        return buildApiError(HttpStatus.BAD_REQUEST, "Incorrectly made request.", errorMessage, e);
+        return buildApiError(HttpStatus.BAD_REQUEST, "Incorrectly made request.", errorMessage);
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleMissingServletRequestParameterException(final MissingServletRequestParameterException e) {
-        log.info("400 {}", e.getMessage(), e);
-        return buildApiError(HttpStatus.BAD_REQUEST, "Required request parameter for method parameter is not present.", e.getMessage(), e);
+        log.warn("400 {}", e.getMessage(), e);
+        return buildApiError(HttpStatus.BAD_REQUEST, "Required request parameter for method parameter is not present.", e.getMessage());
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleIllegalArgumentException(final IllegalArgumentException e) {
-        log.info("400 {}", e.getMessage(), e);
-        return buildApiError(HttpStatus.BAD_REQUEST, "Illegal argument.", e.getMessage(), e);
+        log.warn("400 {}", e.getMessage(), e);
+        return buildApiError(HttpStatus.BAD_REQUEST, "Illegal argument.", e.getMessage());
     }
 
     @ExceptionHandler(ConditionsNotMetException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError handleOperationConditionsNotMetException(final ConditionsNotMetException e) {
-        log.info("400 {}", e.getMessage(), e);
-        return buildApiError(HttpStatus.BAD_REQUEST, "For the requested operation the conditions are not met.", e.getMessage(), e);
+        log.warn("400 {}", e.getMessage(), e);
+        return buildApiError(HttpStatus.BAD_REQUEST, "For the requested operation the conditions are not met.", e.getMessage());
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ApiError handleNotFoundException(final NotFoundException e) {
         log.info("404 {}", e.getMessage(), e);
-        return buildApiError(HttpStatus.NOT_FOUND, "The required object was not found.", e.getMessage(), e);
+        return buildApiError(HttpStatus.NOT_FOUND, "The required object was not found.", e.getMessage());
     }
 
     @ExceptionHandler({AlreadyExistsException.class, DataIntegrityViolationException.class, ConflictException.class})
     @ResponseStatus(HttpStatus.CONFLICT)
     public ApiError handleConflictException(final RuntimeException e) {
-        log.info("409 {}", e.getMessage(), e);
-        return buildApiError(HttpStatus.CONFLICT, "Integrity constraint has been violated.", e.getMessage(), e);
+        log.warn("409 {}", e.getMessage(), e);
+        return buildApiError(HttpStatus.CONFLICT, "Integrity constraint has been violated.", e.getMessage());
     }
 
-    @ExceptionHandler
+    @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ApiError handleException(final Exception e) {
         log.error("500 {}", e.getMessage(), e);
-        return buildApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Error occurred", e.getMessage(), e);
+        return buildApiError(HttpStatus.INTERNAL_SERVER_ERROR, "Error occurred", e.getMessage());
     }
 
-    private ApiError buildApiError(HttpStatus status, String reason, String message, Exception e) {
-        StringWriter sw = new StringWriter();
-        PrintWriter pw = new PrintWriter(sw);
-        e.printStackTrace(pw);
-        String stackTrace = sw.toString();
-
+    private ApiError buildApiError(HttpStatus status, String reason, String message) {
         return ApiError.builder()
                 .status(status)
                 .reason(reason)
                 .message(message)
                 .timestamp(LocalDateTime.now().format(FORMATTER))
-                .stackTrace(stackTrace)
                 .build();
     }
 }
