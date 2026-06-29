@@ -8,6 +8,12 @@ spring:
     properties:
       hibernate:
         format_sql: false
+    eureka:
+      client:
+        enabled: false
+    cloud:
+      discovery:
+        enabled: false
   sql:
     init:
       mode: always

@@ -288,13 +288,17 @@ public class EventServiceImpl implements EventService {
     }
 
     private void saveHit(HttpServletRequest request) {
-        EndpointHitDto hit = EndpointHitDto.builder()
-                .app("ewm-main-service")
-                .uri(request.getRequestURI())
-                .ip(request.getRemoteAddr())
-                .timestamp(LocalDateTime.now())
-                .build();
-        statsClient.hit(hit);
+        try {
+            EndpointHitDto hit = EndpointHitDto.builder()
+                    .app("ewm-main-service")
+                    .uri(request.getRequestURI())
+                    .ip(request.getRemoteAddr())
+                    .timestamp(LocalDateTime.now())
+                    .build();
+            statsClient.hit(hit);
+        } catch (Exception e) {
+            log.warn("Не удалось сохранить статистику для {}: {}", request.getRequestURI(), e.getMessage());
+        }
     }
 
     private List<EventShortDto> enrichEventsWithStats(List<Event> events, boolean onlyPublished) {
