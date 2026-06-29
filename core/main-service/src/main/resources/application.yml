@@ -4,19 +4,6 @@ server:
 spring:
   application:
     name: main-service
-  config:
-    import: "configserver:"
-  cloud:
-    config:
-      discovery:
-        enabled: true
-        service-id: config-server
-      fail-fast: true
-      retry:
-        max-attempts: 30
-        initial-interval: 10000
-        multiplier: 1.5
-        useRandomPolicy: true
 
 eureka:
   client:
@@ -26,9 +13,3 @@ eureka:
     fetch-registry: true
   instance:
     prefer-ip-address: true
-    hostname: localhost
-
-logging:
-  level:
-    org.springframework.cloud: DEBUG
-    com.netflix.discovery: DEBUG

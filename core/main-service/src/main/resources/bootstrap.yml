@@ -3,13 +3,11 @@ spring:
     name: main-service
   cloud:
     config:
-      discovery:
-        enabled: true
-        service-id: CONFIG-SERVER
+      uri: http://config-server:8888
       fail-fast: true
       retry:
-        max-attempts: 30
-        initial-interval: 5000
+        max-attempts: 5
+        initial-interval: 2000
         multiplier: 1.5
 
 eureka:
@@ -18,10 +16,3 @@ eureka:
       defaultZone: http://discovery-server:8761/eureka
     register-with-eureka: true
     fetch-registry: true
-  instance:
-    prefer-ip-address: true
-
-logging:
-  level:
-    org.springframework.cloud: DEBUG
-    com.netflix.discovery: DEBUG

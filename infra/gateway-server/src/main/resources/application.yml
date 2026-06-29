@@ -4,40 +4,14 @@ server:
 spring:
   application:
     name: gateway-server
-  config:
-    import: "configserver:"
   cloud:
-    config:
+    gateway:
       discovery:
-        enabled: true
-        service-id: config-server
-      fail-fast: true
-      retry:
-        max-attempts: 30
-        initial-interval: 10000
-        multiplier: 1.5
-        useRandomPolicy: true
-  gateway:
-    discovery:
-      locator:
-        enabled: false
-    routes:
-      - id: main-service
-        uri: http://ewm-service:8080
-        predicates:
-          - Path=/**
-
-eureka:
-  client:
-    serviceUrl:
-      defaultZone: http://discovery-server:8761/eureka
-    register-with-eureka: true
-    fetch-registry: true
-  instance:
-    prefer-ip-address: true
-    hostname: localhost
-
-logging:
-  level:
-    org.springframework.cloud: DEBUG
-    com.netflix.discovery: DEBUG
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: main-service
+          uri: lb://main-service
+          predicates:
+            - Path=/**

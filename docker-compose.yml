@@ -13,12 +13,19 @@ services:
   config-server:
     build: infra/config-server
     container_name: config-server
+    ports:
+      - "0:8888"
     depends_on:
       discovery-server:
         condition: service_healthy
     environment:
       - EUREKA_URI=http://discovery-server:8761/eureka
       - SPRING_PROFILES_ACTIVE=native
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
 
   stats-server-db:
     image: postgres:16.1
@@ -40,24 +47,18 @@ services:
   stats-server:
     build: stat/stats-server
     container_name: stats-server
-    ports:
-      - "9090:9090"
     depends_on:
       stats-server-db:
         condition: service_healthy
       discovery-server:
+        condition: service_healthy
+      config-server:
         condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_STAT_SERVER}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_STAT_SERVER}
       - EUREKA_URI=http://discovery-server:8761/eureka
-      - JAVA_OPTS=-Dserver.port=9090
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9090/actuator/health" ]
-      timeout: 5s
-      interval: 5s
-      retries: 10
 
   ewm-main-db:
     image: postgres:16.1
@@ -81,21 +82,18 @@ services:
     container_name: ewm-service
     depends_on:
       stats-server:
-        condition: service_healthy
+        condition: service_started
       ewm-main-db:
         condition: service_healthy
       discovery-server:
+        condition: service_healthy
+      config-server:
         condition: service_healthy
     environment:
       - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL_MAIN_SERVICE}
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_MAIN_SERVICE}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_MAIN_SERVICE}
-      - JAVA_OPTS=-Dserver.port=8080
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      timeout: 5s
-      interval: 5s
-      retries: 10
+      - EUREKA_URI=http://discovery-server:8761/eureka
 
   gateway-server:
     build: infra/gateway-server
@@ -106,7 +104,7 @@ services:
       discovery-server:
         condition: service_healthy
       ewm-service:
-        condition: service_healthy
+        condition: service_started
     environment:
       - JAVA_OPTS=-Dserver.port=8080
     healthcheck:
