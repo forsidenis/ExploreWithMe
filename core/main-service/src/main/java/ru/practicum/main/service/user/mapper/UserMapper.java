@@ -10,7 +10,10 @@ import ru.practicum.main.service.user.model.User;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class UserMapper {
     public static User toEntity(NewUserRequest request) {
-        return new User(null, request.getEmail(), request.getName());
+        return User.builder()
+                .email(request.getEmail())
+                .name(request.getName())
+                .build();
     }
 
     public static UserDto toDto(User user) {

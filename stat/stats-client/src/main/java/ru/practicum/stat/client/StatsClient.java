@@ -26,7 +26,7 @@ public class StatsClient {
     private final RestClient restClient;
     private final DiscoveryClient discoveryClient;
     private final RetryTemplate retryTemplate;
-    private final String statsServiceId = "stats-server";
+    private final String statsServiceId = "STATS-SERVER";
     private final String statsServerUrl;
 
     public StatsClient(DiscoveryClient discoveryClient,
@@ -79,31 +79,41 @@ public class StatsClient {
     }
 
     public EndpointHitDto hit(EndpointHitDto hit) {
-        URI uri = getServiceUri("/hit");
-        log.debug("Sending hit to {}", uri);
-        return restClient.post()
-                .uri(uri)
-                .body(hit)
-                .retrieve()
-                .body(EndpointHitDto.class);
+        try {
+            URI uri = getServiceUri("/hit");
+            log.debug("Sending hit to {}", uri);
+            return restClient.post()
+                    .uri(uri)
+                    .body(hit)
+                    .retrieve()
+                    .body(EndpointHitDto.class);
+        } catch (Exception e) {
+            log.error("Ошибка при отправке hit: {}", e.getMessage(), e);
+            throw e; // или вернуть fallback
+        }
     }
 
     public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end,
                                        List<String> uris, Boolean unique) {
-        UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/stats")
-                .queryParam("start", start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-                .queryParam("end", end.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
-                .queryParam("unique", unique);
-        if (uris != null && !uris.isEmpty()) {
-            builder.queryParam("uris", String.join(",", uris));
-        }
-        URI uri = getServiceUri(builder.build().encode().toUriString());
-        log.debug("Getting stats from {}", uri);
+        try {
+            UriComponentsBuilder builder = UriComponentsBuilder.fromPath("/stats")
+                    .queryParam("start", start.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                    .queryParam("end", end.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
+                    .queryParam("unique", unique);
+            if (uris != null && !uris.isEmpty()) {
+                builder.queryParam("uris", String.join(",", uris));
+            }
+            URI uri = getServiceUri(builder.build().encode().toUriString());
+            log.debug("Getting stats from {}", uri);
 
-        ViewStatsDto[] response = restClient.get()
-                .uri(uri)
-                .retrieve()
-                .body(ViewStatsDto[].class);
-        return response != null ? Arrays.asList(response) : Collections.emptyList();
+            ViewStatsDto[] response = restClient.get()
+                    .uri(uri)
+                    .retrieve()
+                    .body(ViewStatsDto[].class);
+            return response != null ? Arrays.asList(response) : Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Ошибка при получении статистики: {}", e.getMessage(), e);
+            return Collections.emptyList();
+        }
     }
 }
