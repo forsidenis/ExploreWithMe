@@ -12,6 +12,6 @@ spring:
           lower-case-service-id: true
       routes:
         - id: main-service
-          uri: lb://main-service
+          uri: lb:///MAIN-SERVICE
           predicates:
             - Path=/**
