@@ -47,6 +47,8 @@ services:
   stats-server:
     build: stat/stats-server
     container_name: stats-server
+    ports:
+      - "9090:9090"
     depends_on:
       stats-server-db:
         condition: service_healthy
@@ -59,6 +61,12 @@ services:
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_STAT_SERVER}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_STAT_SERVER}
       - EUREKA_URI=http://discovery-server:8761/eureka
+      - SERVER_PORT=9090   # переопределяет server.port: 0 для CI
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
 
   ewm-main-db:
     image: postgres:16.1
@@ -80,9 +88,11 @@ services:
   ewm-service:
     build: core/main-service
     container_name: ewm-service
+    ports:
+      - "8080:8080"
     depends_on:
       stats-server:
-        condition: service_started
+        condition: service_healthy
       ewm-main-db:
         condition: service_healthy
       discovery-server:
@@ -94,6 +104,12 @@ services:
       - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_MAIN_SERVICE}
       - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_MAIN_SERVICE}
       - EUREKA_URI=http://discovery-server:8761/eureka
+      - SERVER_PORT=8080
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      timeout: 5s
+      interval: 5s
+      retries: 10
 
   gateway-server:
     build: infra/gateway-server
@@ -104,7 +120,7 @@ services:
       discovery-server:
         condition: service_healthy
       ewm-service:
-        condition: service_started
+        condition: service_healthy
     environment:
       - JAVA_OPTS=-Dserver.port=8080
     healthcheck:
