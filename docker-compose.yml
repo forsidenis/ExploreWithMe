@@ -57,12 +57,12 @@ services:
       config-server:
         condition: service_healthy
     environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SERVER_PORT=9090
       - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-server-db:5432/ewm-stat
       - SPRING_DATASOURCE_USERNAME=stat
       - SPRING_DATASOURCE_PASSWORD=stat
       - EUREKA_URI=http://discovery-server:8761/eureka
-      - SERVER_PORT=9090
-      - SPRING_PROFILES_ACTIVE=docker
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9090/actuator/health"]
       timeout: 5s
