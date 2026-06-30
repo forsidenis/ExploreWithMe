@@ -6,12 +6,6 @@ spring:
     name: main-service
   config:
     import: "configserver:"
-  cloud:
-    config:
-      discovery:
-        enabled: true
-        service-id: CONFIG-SERVER
-      fail-fast: true
 
 logging:
   level:
