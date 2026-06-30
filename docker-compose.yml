@@ -21,6 +21,7 @@ services:
     environment:
       - EUREKA_URI=http://discovery-server:8761/eureka
       - SPRING_PROFILES_ACTIVE=native
+      - SERVER_PORT=8888   # <-- задаём порт через переменную
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
       timeout: 5s
@@ -127,6 +128,7 @@ services:
     environment:
       - SERVER_PORT=8080
       - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_URI=http://discovery-server:8761/eureka
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/actuator/health" ]
       timeout: 5s
