@@ -1,0 +1,44 @@
+server:
+  port: 8080
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: false
+    database-platform: org.hibernate.dialect.H2Dialect
+  sql:
+    init:
+      mode: always
+  datasource:
+    driver-class-name: org.h2.Driver
+    username: stat
+    password:
+    url: jdbc:h2:mem:ewm_main
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  cloud:
+    discovery:
+      enabled: false
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.client.discovery.simple.SimpleDiscoveryClientAutoConfiguration
+      - org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration
+
+eureka:
+  client:
+    enabled: false
+
+stats:
+  client:
+    enabled: false
+
+logging:
+  level:
+    ru.practicum.main.service: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate: DEBUG
